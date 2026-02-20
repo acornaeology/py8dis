@@ -4,16 +4,16 @@ Main Formatter
 Formats the component parts of a line of disassembly to output.
 """
 
-import classification
-import config
-import disassembly
-import movemanager
+from . import classification
+from . import config
+from . import disassembly
+from . import movemanager
 import textwrap
-import trace
-import utils
-import memorymanager
-from memorymanager import BinaryAddr, RuntimeAddr
-from align import Align
+from . import trace
+from . import utils
+from . import memorymanager
+from .memorymanager import BinaryAddr, RuntimeAddr
+from .align import Align
 
 def add_hex_dump(binary_addr, length, cycles_description, s):
     """Creates the majority of the inline comment for a line of output.

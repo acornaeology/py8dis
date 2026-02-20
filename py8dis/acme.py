@@ -5,9 +5,9 @@ Acme assembler
 from __future__ import print_function
 import sys
 
-import config
-import utils
-import assembler
+from . import config
+from . import utils
+from . import assembler
 import traceback
 
 class Acme(assembler.Assembler):

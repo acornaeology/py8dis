@@ -1,8 +1,8 @@
 from typing import Optional
-from align import Align
-from format import Format
+from .align import Align
+from .format import Format
 
-import utils
+from . import utils
 
 class Constant:
     """A class representing a constant with its value, name, comment and alignment.

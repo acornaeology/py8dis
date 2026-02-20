@@ -37,20 +37,20 @@ expression must be of the operand, not the opcode.
 from __future__ import print_function
 import collections
 
-import config
-import disassembly
-import labelmanager
-import mainformatter
-import memorymanager
-import movemanager
+from . import config
+from . import disassembly
+from . import labelmanager
+from . import mainformatter
+from . import memorymanager
+from . import movemanager
 import pprint
-import stats
-import trace
+from . import stats
+from . import trace
 import traceback
-import utils
-from memorymanager import BinaryAddr, RuntimeAddr
-from format import Format
-from binaryaddrtype import BinaryAddrType
+from . import utils
+from .memorymanager import BinaryAddr, RuntimeAddr
+from .format import Format
+from .binaryaddrtype import BinaryAddrType
 
 expressions   = {}
 memory_binary = memorymanager.memory_binary

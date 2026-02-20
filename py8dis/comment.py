@@ -1,7 +1,7 @@
-import utils
-import config
-import mainformatter
-from align import Align
+from . import utils
+from . import config
+from . import mainformatter
+from .align import Align
 
 class Annotation(object):
     """A raw string to add to the output."""

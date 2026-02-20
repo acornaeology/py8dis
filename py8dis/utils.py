@@ -10,7 +10,7 @@ import re
 import sys
 import traceback
 
-import config
+from . import config
 
 # Path to this library
 library_path = os.path.dirname(os.path.abspath(__file__))

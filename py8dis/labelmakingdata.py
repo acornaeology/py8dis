@@ -1,4 +1,4 @@
-from binaryaddrtype import BinaryAddrType
+from .binaryaddrtype import BinaryAddrType
 
 class LabelMakingData:
     def __init__(self,

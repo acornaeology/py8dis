@@ -1,17 +1,17 @@
 import collections
 
-import config
-import classification
-import config
-import disassembly
-import mainformatter
-import memorymanager
-import movemanager
-import cpu
-import trace
-import utils
-from memorymanager import BinaryAddr, RuntimeAddr
-from binaryaddrtype import BinaryAddrType
+from . import config
+from . import classification
+from . import config
+from . import disassembly
+from . import mainformatter
+from . import memorymanager
+from . import movemanager
+from . import cpu
+from . import trace
+from . import utils
+from .memorymanager import BinaryAddr, RuntimeAddr
+from .binaryaddrtype import BinaryAddrType
 
 memory_binary = memorymanager.memory_binary
 

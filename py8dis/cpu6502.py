@@ -1,18 +1,18 @@
-import classification
+from . import classification
 import collections
-import config
-import disassembly
-import labelmanager
-import mainformatter
-import memorymanager
-import movemanager
+from . import config
+from . import disassembly
+from . import labelmanager
+from . import mainformatter
+from . import memorymanager
+from . import movemanager
 import re
-import cpu
-import trace
-import utils
+from . import cpu
+from . import trace
+from . import utils
 import sys
-from align import Align
-from binaryaddrtype import BinaryAddrType
+from .align import Align
+from .binaryaddrtype import BinaryAddrType
 
 memory_binary = memorymanager.memory_binary
 

@@ -5,11 +5,11 @@ XA assembler
 from __future__ import print_function
 import sys
 
-import config
-import disassembly
-import movemanager
-import utils
-import assembler
+from . import config
+from . import disassembly
+from . import movemanager
+from . import utils
+from . import assembler
 
 class Xa(assembler.Assembler):
     """This class encapsulates xa-specific syntax and features."""

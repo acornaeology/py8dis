@@ -2,14 +2,14 @@
 Acorn specific functions.
 """
 
-from commands import *
-from classification import INSIDE_A_CLASSIFICATION
-import config
-import trace
-import utils
-import classification
-import machinetype
-from memorymanager import BinaryAddr, RuntimeAddr
+from .commands import *
+from .classification import INSIDE_A_CLASSIFICATION
+from . import config
+from . import trace
+from . import utils
+from . import classification
+from . import machinetype
+from .memorymanager import BinaryAddr, RuntimeAddr
 
 def xy_addr(x_addr, y_addr):
     """Given two binary addresses holding the low byte and high byte of an address,

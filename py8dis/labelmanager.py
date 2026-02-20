@@ -66,13 +66,13 @@ this would not very readable or useful output.)
 
 import collections
 
-import config
-import disassembly
-import movemanager
-import memorymanager
-import utils
-from memorymanager import BinaryAddr, RuntimeAddr
-from label import Label
+from . import config
+from . import disassembly
+from . import movemanager
+from . import memorymanager
+from . import utils
+from .memorymanager import BinaryAddr, RuntimeAddr
+from .label import Label
 
 # A runtime address is the key of this dictionary whose value is
 # a single Label (which can hold multiple label names and expressions

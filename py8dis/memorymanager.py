@@ -9,7 +9,7 @@ be executed at another (the 'runtime address'). We define classes that help
 distinguish these types of addresses.
 """
 
-import utils
+from . import utils
 
 # We make one class to hold a runtime address, and another for a binary address.
 # They are just integers underneath, but storing them in classes means we can
@@ -76,21 +76,21 @@ def get_u16_be_binary(binary_addr):
 def get_u8_runtime(runtime_addr):
     """Get 8 bit number given a runtime address"""
 
-    import movemanager
+    from . import movemanager
     binary_loc = movemanager.r2b_checked(runtime_addr)
     return get_u8_binary(binary_loc.binary_addr)
 
 def get_u16_runtime(runtime_addr):
     """Get 16 bit number (little-endian) given a runtime address"""
 
-    import movemanager
+    from . import movemanager
     binary_loc = movemanager.r2b_checked(runtime_addr)
     return get_u16_binary(binary_loc.binary_addr)
 
 def get_u16_be_runtime(runtime_addr):
     """Get 16 bit number (big-endian) given a runtime address"""
 
-    import movemanager
+    from . import movemanager
     binary_loc = movemanager.r2b_checked(runtime_addr)
     return get_u16_be_binary(binary_loc.binary_addr)
 
@@ -149,7 +149,7 @@ class MemoryRuntime(object):
     """Class for reading runtime memory with address validation"""
 
     def __getitem__(self, runtime_addr):
-        import movemanager
+        from . import movemanager
         assert is_valid_runtime_addr(runtime_addr)
         runtime_addr = RuntimeAddr(runtime_addr)
         binary_loc = movemanager.r2b_checked(runtime_addr)

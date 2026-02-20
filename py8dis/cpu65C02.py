@@ -1,5 +1,5 @@
-from cpu6502 import *
-from memorymanager import BinaryAddr, RuntimeAddr
+from .cpu6502 import *
+from .memorymanager import BinaryAddr, RuntimeAddr
 
 class Cpu65C02(Cpu6502):
     """Singleton class representing a 65C02 CPU"""

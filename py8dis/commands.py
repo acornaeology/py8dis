@@ -57,32 +57,32 @@ go()                    Classifies code and data and emits assembly.
 """
 
 import argparse
-import memorymanager
+from . import memorymanager
 
 # These functions are directly exposed to the user.
-from disassembly import get_label
-from memorymanager import get_u8_binary, get_u16_binary, get_u16_be_binary, get_u16_be_runtime
-from align import Align
-from format import Format
-from binaryaddrtype import BinaryAddrType
+from .disassembly import get_label
+from .memorymanager import get_u8_binary, get_u16_binary, get_u16_be_binary, get_u16_be_runtime
+from .align import Align
+from .format import Format
+from .binaryaddrtype import BinaryAddrType
 
 # These modules are used to implement things in this file and aren't so directly
 # exposed to the user. The user can still access them using the qualified names
 # if they wish, since a control file will usually do import * from this module.
-import classification
-import config
-import disassembly
-import labelmanager
-import movemanager
-import mainformatter
-import align
-import trace
-import utils
+from . import classification
+from . import config
+from . import disassembly
+from . import labelmanager
+from . import movemanager
+from . import mainformatter
+from . import align
+from . import trace
+from . import utils
 
-import cpu
-import cpu65C02
-import cpu6502
-import cpu8080
+from . import cpu
+from . import cpu65C02
+from . import cpu6502
+from . import cpu8080
 
 cpu_names = { "6502"  : lambda : cpu6502.Cpu6502(),
               "65c02" : lambda : cpu65C02.Cpu65C02(),
@@ -881,13 +881,13 @@ if args.lower and args.upper:
     utils.die("--lower and --upper arguments are incompatible")
 
 if args.acme:
-    import acme
+    from . import acme
 elif args.xa:
-    import xa
+    from . import xa
 elif args.z88dk_8080:
-    import z88dk_8080
+    from . import z88dk_8080
 else:
-    import beebasm
+    from . import beebasm
 
 set_output_filename = config.get_assembler().set_output_filename
 

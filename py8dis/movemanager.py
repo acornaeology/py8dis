@@ -20,11 +20,11 @@ enforce this single source rule; instead we allow add_move() to
 import collections
 import contextlib
 
-import config
-import utils
-import memorymanager
-from movedefinition import MoveDefinition
-from memorymanager import BinaryLocation, RuntimeLocation, RuntimeAddr, BinaryAddr
+from . import config
+from . import utils
+from . import memorymanager
+from .movedefinition import MoveDefinition
+from .memorymanager import BinaryLocation, RuntimeLocation, RuntimeAddr, BinaryAddr
 
 # active_move_ids is a list of MoveId objects. It is managed by the
 # MoveId class itself.

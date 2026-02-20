@@ -12,29 +12,29 @@ the target range, because we'll classify anything left over as data.
 """
 
 from __future__ import print_function
-import classification
-from classification import INSIDE_A_CLASSIFICATION
+from . import classification
+from .classification import INSIDE_A_CLASSIFICATION
 import collections
-import config
-import constant
+from . import config
+from . import constant
 import copy
 import inspect
-import labelmanager
-import labelmakingdata
-import mainformatter
-import memorymanager
-import movemanager
+from . import labelmanager
+from . import labelmakingdata
+from . import mainformatter
+from . import memorymanager
+from . import movemanager
 import re
-import trace
-import utils
-from binaryaddrtype import BinaryAddrType
-from comment import Annotation, Comment
-from align import Align
+from . import trace
+from . import utils
+from .binaryaddrtype import BinaryAddrType
+from .comment import Annotation, Comment
+from .align import Align
 
-from movemanager import BinaryLocation
-from memorymanager import BinaryAddr, RuntimeAddr
-from align import Align
-from format import Format
+from .movemanager import BinaryLocation
+from .memorymanager import BinaryAddr, RuntimeAddr
+from .align import Align
+from .format import Format
 
 # A user supplied function that creates a label name based on context
 user_label_maker_hook = None

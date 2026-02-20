@@ -1,5 +1,5 @@
-import memorymanager
-from memorymanager import BinaryAddr, RuntimeAddr
+from . import memorymanager
+from .memorymanager import BinaryAddr, RuntimeAddr
 
 class MoveDefinition:
     """A move definition represents an range of addresses in the binary file

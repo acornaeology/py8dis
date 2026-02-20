@@ -5,9 +5,9 @@ z88dk assembler (for 8080)
 from __future__ import print_function
 import sys
 
-import config
-import utils
-import assembler
+from . import config
+from . import utils
+from . import assembler
 
 class Z88DK(assembler.Assembler):
     """This class encapsulates z88dk-specific syntax and features."""

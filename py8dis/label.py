@@ -1,11 +1,11 @@
 import collections
-import memorymanager
-import movemanager
-import disassembly
-import config
-import utils
-from memorymanager import BinaryAddr, RuntimeAddr
-from binaryaddrtype import BinaryAddrType
+from . import memorymanager
+from . import movemanager
+from . import disassembly
+from . import config
+from . import utils
+from .memorymanager import BinaryAddr, RuntimeAddr
+from .binaryaddrtype import BinaryAddrType
 
 class Label(object):
     class ExplicitName(object):

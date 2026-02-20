@@ -1,16 +1,16 @@
-import classification
+from . import classification
 import collections
 import copy
-import config
-import disassembly
-import labelmanager
-import mainformatter
-import memorymanager
-import movemanager
-import trace
-import utils
-from memorymanager import BinaryLocation
-from align import Align
+from . import config
+from . import disassembly
+from . import labelmanager
+from . import mainformatter
+from . import memorymanager
+from . import movemanager
+from . import trace
+from . import utils
+from .memorymanager import BinaryLocation
+from .align import Align
 
 class Cpu(object):
     """Abstract base class representing a CPU"""

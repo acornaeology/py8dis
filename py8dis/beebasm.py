@@ -5,14 +5,14 @@ Beebasm assembler
 from __future__ import print_function
 import sys
 
-import assembler
-import config
-import disassembly
-import mainformatter
-import memorymanager
-import movemanager
-import utils
-from binaryaddrtype import BinaryAddrType
+from . import assembler
+from . import config
+from . import disassembly
+from . import mainformatter
+from . import memorymanager
+from . import movemanager
+from . import utils
+from .binaryaddrtype import BinaryAddrType
 
 class Beebasm(assembler.Assembler):
     """This class encapsulates beebasm-specific syntax and features."""

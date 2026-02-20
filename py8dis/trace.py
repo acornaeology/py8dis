@@ -8,8 +8,8 @@ which actually does the work, see cpu.py and derived classes.
 """
 
 import collections
-import subroutine
-import memorymanager
+from . import subroutine
+from . import memorymanager
 
 cpu                              = None     # an object of class Cpu
 subroutine_argument_finder_hooks = []       # Python routines ('hooks') for naming constant arguments to subroutines
