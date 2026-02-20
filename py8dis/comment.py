@@ -29,6 +29,7 @@ class Comment(Annotation):
     Derives from the Annotation class."""
 
     def __init__(self, text, word_wrap=True, indent=0, align=Align.BEFORE_LABEL, priority=None, auto_generated=True):
+        self.source_text = text
 
         def late_formatter():
             strtext = str(text)

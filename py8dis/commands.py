@@ -83,6 +83,7 @@ from . import cpu
 from . import cpu65C02
 from . import cpu6502
 from . import cpu8080
+from . import structured as structured_module
 
 cpu_names = { "6502"  : lambda : cpu6502.Cpu6502(),
               "65c02" : lambda : cpu65C02.Cpu65C02(),
@@ -859,6 +860,16 @@ def go(print_output=True, post_trace_steps=None, autostring_min_length=3):
 
     # Return assembly code as a string
     return result
+
+
+def get_structured():
+    """Get structured disassembly data as a JSON-serialisable dict.
+
+    Must be called after go(). Returns a dictionary containing the
+    complete disassembly with semantic structure preserved: addresses,
+    labels, mnemonics, operands, comments, cross-references, etc.
+    """
+    return structured_module.emit_structured()
 
 
 # --- Initialisation ---
