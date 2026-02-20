@@ -851,11 +851,8 @@ def go(print_output=True, post_trace_steps=None, autostring_min_length=3):
     result = disassembly.emit()
 
     # Output assembly code if wanted
-    global args
-
-    # Write to a file if specified
-    if args.output:
-        with open(args.output, 'w') as file:
+    if _output_filepath is not None:
+        with open(_output_filepath, 'w') as file:
             file.write(result)
     elif print_output:
         print(result)
@@ -863,35 +860,101 @@ def go(print_output=True, post_trace_steps=None, autostring_min_length=3):
     # Return assembly code as a string
     return result
 
-# Command line parsing
-parser = argparse.ArgumentParser()
-parser.add_argument("-b", "--beebasm", action="store_true", help="generate beebasm-style output (default)")
-parser.add_argument("-a", "--acme", action="store_true", help="generate acme-style output")
-parser.add_argument("-x", "--xa", action="store_true", help="generate xa-style output")
-parser.add_argument("-8", "--z88dk-8080", action="store_true", help="generate z88dk style output for the 8080 processor")
-parser.add_argument("-l", "--lower", action="store_true", help="generate lower-case output (default)")
-parser.add_argument("-u", "--upper", action="store_true", help="generate upper-case output")
-parser.add_argument("-o", "--output", help="output asm file")
-args = parser.parse_known_args()[0]
 
-assembler_count = sum(1 for x in (args.beebasm, args.acme, args.xa, args.z88dk_8080) if x)
-if assembler_count > 1:
-    utils.die("--beebasm, --acme, --xa and --z88dk-8080 arguments are incompatible")
-if args.lower and args.upper:
-    utils.die("--lower and --upper arguments are incompatible")
+# --- Initialisation ---
+#
+# py8dis can be configured either by calling init() explicitly before using
+# any commands, or by running a disassembly script directly (which triggers
+# init from sys.argv via _ensure_init).  Importing the module without calling
+# init() is safe — initialisation is deferred until the first command that
+# needs it.
 
-if args.acme:
-    from . import acme
-elif args.xa:
-    from . import xa
-elif args.z88dk_8080:
-    from . import z88dk_8080
-else:
-    from . import beebasm
+_initialised = False
+_output_filepath = None
 
-set_output_filename = config.get_assembler().set_output_filename
 
-if args.upper:
-    config.set_lower_case(False)
-else:
-    config.set_lower_case(True)
+def init(assembler_name="beebasm", lower_case=True, output_filepath=None):
+    """Initialise py8dis with the given assembler and options.
+
+    This must be called before load() or go() if you want to configure
+    py8dis programmatically. If not called, py8dis will auto-initialise
+    from sys.argv the first time a command is used (preserving backward
+    compatibility with scripts run directly).
+
+    Args:
+        assembler_name: One of "beebasm", "acme", "xa", "z88dk-8080".
+        lower_case: Whether to emit lower-case mnemonics (default True).
+        output_filepath: Optional path to write the assembly output to.
+    """
+    global _initialised, _output_filepath
+
+    assembler_map = {
+        "beebasm": lambda: __import__("py8dis.beebasm", fromlist=["beebasm"]),
+        "acme": lambda: __import__("py8dis.acme", fromlist=["acme"]),
+        "xa": lambda: __import__("py8dis.xa", fromlist=["xa"]),
+        "z88dk-8080": lambda: __import__("py8dis.z88dk_8080", fromlist=["z88dk_8080"]),
+    }
+
+    if assembler_name not in assembler_map:
+        utils.die(f"Unknown assembler: {assembler_name}. "
+                  f"Choose from: {', '.join(assembler_map)}")
+
+    assembler_map[assembler_name]()
+    config.set_lower_case(lower_case)
+    _output_filepath = output_filepath
+    _initialised = True
+
+
+def _init_from_argv():
+    """Parse sys.argv for py8dis options (backward-compatible auto-init)."""
+    global _output_filepath
+
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("-b", "--beebasm", action="store_true")
+    parser.add_argument("-a", "--acme", action="store_true")
+    parser.add_argument("-x", "--xa", action="store_true")
+    parser.add_argument("-8", "--z88dk-8080", action="store_true")
+    parser.add_argument("-l", "--lower", action="store_true")
+    parser.add_argument("-u", "--upper", action="store_true")
+    parser.add_argument("-o", "--output")
+    args = parser.parse_known_args()[0]
+
+    assembler_count = sum(1 for x in (args.beebasm, args.acme, args.xa, args.z88dk_8080) if x)
+    if assembler_count > 1:
+        utils.die("--beebasm, --acme, --xa and --z88dk-8080 arguments are incompatible")
+    if args.lower and args.upper:
+        utils.die("--lower and --upper arguments are incompatible")
+
+    if args.acme:
+        assembler_name = "acme"
+    elif args.xa:
+        assembler_name = "xa"
+    elif args.z88dk_8080:
+        assembler_name = "z88dk-8080"
+    else:
+        assembler_name = "beebasm"
+
+    _output_filepath = args.output
+    init(assembler_name=assembler_name, lower_case=not args.upper,
+         output_filepath=_output_filepath)
+
+
+def _ensure_init():
+    """Ensure py8dis is initialised, auto-initialising from argv if needed."""
+    if not _initialised:
+        _init_from_argv()
+
+
+def set_output_filename(filename):
+    """Set the output filename for the assembler."""
+    _ensure_init()
+    config.get_assembler().set_output_filename(filename)
+
+
+# Auto-initialise on first use — the original load() is wrapped to trigger this.
+_original_load = load
+
+def load(binary_load_addr, filename, cpu_name="6502", md5sum=None):
+    """Load a binary file. Ensures py8dis is initialised first."""
+    _ensure_init()
+    return _original_load(binary_load_addr, filename, cpu_name, md5sum)
