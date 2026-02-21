@@ -712,6 +712,19 @@ def emit(print_output=True):
     # to fix up the classifications afterwards.
     move_ranges = calculate_move_ranges()
 
+    # Reorder move ranges so that relocated blocks are emitted before
+    # the main code. This ensures that labels in relocated blocks are
+    # defined before they are referenced from the main code, which is
+    # required by two-pass assemblers like beebasm to select the
+    # correct addressing mode (e.g. shorter zero-page instructions).
+    def _move_range_sort_key(move_range):
+        start_addr = move_range[0]
+        move_id = movemanager.move_id_for_binary_addr[start_addr]
+        is_base = 1 if move_id == movemanager.BASE_MOVE_ID else 0
+        return (is_base, start_addr)
+
+    move_ranges.sort(key=_move_range_sort_key)
+
     for start_addr, end_addr in move_ranges:
         isolate_range(start_addr, end_addr)
 
