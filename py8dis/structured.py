@@ -83,14 +83,19 @@ def _build_subroutines(items):
     sub_binary = {}
     by_move = {}
     for sub in trace.subroutines_list:
-        ba, _ = movemanager.r2b(sub.runtime_addr, specific_move_id=sub.move_id)
+        mid = sub.move_id
+        ba, resolved_mid = movemanager.r2b(sub.runtime_addr,
+                                           specific_move_id=mid)
         if ba is not None:
+            if mid is None:
+                mid = resolved_mid
+            if mid is None:
+                mid = movemanager.move_id_for_binary_addr[ba]
             sub_binary[int(sub.runtime_addr)] = int(ba)
-            mid = int(sub.move_id)
-            by_move.setdefault(mid, []).append((int(ba), sub))
+            by_move.setdefault(int(mid), []).append((int(ba), sub))
 
     for mid in by_move:
-        by_move[mid].sort()
+        by_move[mid].sort(key=lambda x: x[0])
 
     # Map each sub to the next sub's binary addr (same move region).
     next_sub_ba = {}
