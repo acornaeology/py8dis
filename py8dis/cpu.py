@@ -60,17 +60,7 @@ class Cpu(object):
             # If we hit something that's already classified, we can't/don't
             # re-classify it but that doesn't mean we can't continue to
             # trace until something breaks the control flow.
-            if disassembly.is_classified(binary_addr, 1 + opcode.operand_length):
-                # Format the comment using a LazyString and a late_formatter,
-                # to be resolved later.
-                s = opcode.as_string(binary_addr)
-
-                def late_formatter():
-                    return mainformatter.add_inline_comment_including_hexdump(binary_loc, opcode.length(), "", None, config.get_assembler().comment_prefix() + " overlapping: " + str(s)[4:])
-
-                disassembly.add_raw_annotation(binary_loc, utils.LazyString("%s", late_formatter))
-            else:
-                # Classify the address as code
+            if not disassembly.is_classified(binary_addr, 1 + opcode.operand_length):
                 disassembly.add_classification(binary_addr, opcode)
                 opcode.update_references(binary_loc)
 
