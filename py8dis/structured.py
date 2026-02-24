@@ -8,6 +8,8 @@ Must be called after go() has completed tracing, classification,
 label resolution and emission.
 """
 
+import bisect
+
 from . import classification
 from .classification import INSIDE_A_CLASSIFICATION
 from . import config
@@ -33,12 +35,13 @@ def emit_structured():
         external_labels - labels outside the loaded binary range
         items           - ordered list of classified entries
     """
+    items = _build_items()
     return {
         "meta": _build_meta(),
         "constants": _build_constants(),
-        "subroutines": _build_subroutines(),
+        "subroutines": _build_subroutines(items),
         "external_labels": _build_external_labels(),
-        "items": _build_items(),
+        "items": items,
     }
 
 
@@ -60,7 +63,45 @@ def _build_constants():
     return result
 
 
-def _build_subroutines():
+def _build_subroutines(items):
+    """Build subroutine entries with fall_through detection.
+
+    A subroutine falls through when its last code item does not
+    terminate control flow (via RTS, JMP, BRK, RTI, or an
+    unconditional branch), meaning execution continues into the
+    next subroutine in the same memory region.
+    """
+    # Extract code items with binary addresses, preserving order.
+    code_items_by_ba = []
+    for item in items:
+        if item.get("type") == "code":
+            ba = item.get("binary_addr", item["addr"])
+            code_items_by_ba.append((ba, item))
+    code_bas = [ba for ba, _ in code_items_by_ba]
+
+    # Compute binary addresses and group subs by move_id.
+    sub_binary = {}
+    by_move = {}
+    for sub in trace.subroutines_list:
+        ba, _ = movemanager.r2b(sub.runtime_addr, specific_move_id=sub.move_id)
+        if ba is not None:
+            sub_binary[int(sub.runtime_addr)] = int(ba)
+            mid = int(sub.move_id)
+            by_move.setdefault(mid, []).append((int(ba), sub))
+
+    for mid in by_move:
+        by_move[mid].sort()
+
+    # Map each sub to the next sub's binary addr (same move region).
+    next_sub_ba = {}
+    for mid, group in by_move.items():
+        for i in range(len(group) - 1):
+            _, sub = group[i]
+            next_ba, _ = group[i + 1]
+            next_sub_ba[int(sub.runtime_addr)] = next_ba
+
+    _TERMINATORS = {"RTS", "JMP", "BRK", "RTI"}
+
     result = []
     for sub in trace.subroutines_list:
         entry = {"addr": int(sub.runtime_addr)}
@@ -74,7 +115,24 @@ def _build_subroutines():
             entry["on_entry"] = dict(sub.on_entry)
         if sub.on_exit:
             entry["on_exit"] = dict(sub.on_exit)
+
+        ra = int(sub.runtime_addr)
+        if ra in sub_binary and ra in next_sub_ba:
+            ba = sub_binary[ra]
+            nba = next_sub_ba[ra]
+            lo = bisect.bisect_left(code_bas, ba)
+            hi = bisect.bisect_left(code_bas, nba)
+            if lo < hi:
+                last_item = code_items_by_ba[hi - 1][1]
+                mnemonic = last_item["mnemonic"].upper()
+                terminates = mnemonic in _TERMINATORS
+                inline = last_item.get("comment_inline") or ""
+                always_branch = "ALWAYS branch" in inline
+                if not terminates and not always_branch:
+                    entry["fall_through"] = True
+
         result.append(entry)
+
     return result
 
 
