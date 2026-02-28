@@ -713,14 +713,18 @@ def emit(print_output=True):
     move_ranges = calculate_move_ranges()
 
     # Reorder move ranges so that relocated blocks are emitted before
-    # the main code. This ensures that labels in relocated blocks are
-    # defined before they are referenced from the main code, which is
-    # required by two-pass assemblers like beebasm to select the
-    # correct addressing mode (e.g. shorter zero-page instructions).
+    # the main code, sorted by runtime destination address. This
+    # ensures that labels in relocated blocks are defined before they
+    # are referenced from other relocated blocks or the main code,
+    # which is required by two-pass assemblers like beebasm to select
+    # the correct addressing mode (e.g. shorter zero-page instructions).
     def _move_range_sort_key(move_range):
         start_addr = move_range[0]
         move_id = movemanager.move_id_for_binary_addr[start_addr]
         is_base = 1 if move_id == movemanager.BASE_MOVE_ID else 0
+        if not is_base:
+            dest_runtime_addr = movemanager.b2r(BinaryAddr(start_addr))
+            return (is_base, int(dest_runtime_addr))
         return (is_base, start_addr)
 
     move_ranges.sort(key=_move_range_sort_key)
@@ -769,6 +773,14 @@ def emit(print_output=True):
 
         # Handle start of a new !pseudopc block
         if move_id != movemanager.BASE_MOVE_ID:
+            # If there is a gap between the previous block and this one,
+            # set the program counter to the correct binary address before
+            # emitting labels. Without this, inline labels defined here
+            # would get the wrong value (the end of the previous block
+            # rather than the start of this one).
+            if old_end_addr != start_addr:
+                d.extend(formatter.code_start(start_addr, end_addr, False))
+
             # Output any base move labels just before starting a new !pseudopc block
             d.extend(emit_labels(BinaryLocation(start_addr, movemanager.BASE_MOVE_ID), False))
 
