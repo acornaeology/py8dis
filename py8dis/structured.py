@@ -255,6 +255,23 @@ def _resolve_label(runtime_addr):
     return None
 
 
+def _collect_expressions(addr, length, element_size):
+    """Collect expression strings for data values at addr.
+
+    Returns a list parallel to the values (one per element), with None
+    where no expression exists, or None if no expressions are found.
+    """
+    exprs = []
+    has_any = False
+    for i in range(0, length, element_size):
+        e = classification.expressions.get(addr + i)
+        if e is not None:
+            e = str(e)
+            has_any = True
+        exprs.append(e)
+    return exprs if has_any else None
+
+
 def _build_items():
     """Build the ordered list of classified items."""
     items = []
@@ -344,10 +361,16 @@ def _build_items():
                 for i in range(0, length, 2):
                     values.append(raw_bytes[i] | (raw_bytes[i + 1] << 8))
                 entry["values"] = values
+                exprs = _collect_expressions(addr, length, 2)
+                if exprs:
+                    entry["expressions"] = exprs
 
             elif isinstance(c, classification.Byte):
                 entry["type"] = "byte"
                 entry["values"] = list(raw_bytes)
+                exprs = _collect_expressions(addr, length, 1)
+                if exprs:
+                    entry["expressions"] = exprs
 
             items.append(entry)
             addr += length
