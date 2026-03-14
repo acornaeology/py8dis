@@ -152,7 +152,7 @@ def _build_external_labels():
     for runtime_addr in sorted(labelmanager.labels):
         label = labelmanager.labels[runtime_addr]
         binary_addr, _ = movemanager.r2b(runtime_addr)
-        if binary_addr is not None and memorymanager.is_data_loaded_at_binary_addr(binary_addr):
+        if binary_addr is not None and memorymanager.is_valid_binary_addr(binary_addr) and memorymanager.is_data_loaded_at_binary_addr(binary_addr):
             continue
         name = label.get_already_emitted_name()
         if name:
