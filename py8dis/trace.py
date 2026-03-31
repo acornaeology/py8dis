@@ -18,5 +18,5 @@ subroutines_list                 = []       # List of Subroutine() objects
 no_auto_comment_set              = set()    # runtime addresses not to be auto-commented
 references                       = None     # dictionary of references keyed by binary location
 
-def add_subroutine(runtime_addr, name, title, description, entry, exit, hook_function, move_id):
-    subroutines_list.append(subroutine.Subroutine(runtime_addr, name, title, description, entry, exit, hook_function, move_id))
+def add_subroutine(runtime_addr, name, title, description, entry, exit, hook_function, move_id, binary_addr=None):
+    subroutines_list.append(subroutine.Subroutine(runtime_addr, name, title, description, entry, exit, hook_function, move_id, binary_addr=binary_addr))

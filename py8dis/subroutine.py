@@ -1,8 +1,9 @@
 class Subroutine(object):
     """Data describing a subroutine."""
 
-    def __init__(self, runtime_addr, label_name, title, description, on_entry, on_exit, hook_function, move_id):
+    def __init__(self, runtime_addr, label_name, title, description, on_entry, on_exit, hook_function, move_id, binary_addr=None):
         self.runtime_addr   = runtime_addr
+        self.binary_addr    = binary_addr
         self.move_id        = move_id
         self.label_name     = label_name
         self.title          = title

@@ -110,6 +110,8 @@ def _build_subroutines(items):
     result = []
     for sub in trace.subroutines_list:
         entry = {"addr": int(sub.runtime_addr)}
+        if sub.binary_addr is not None:
+            entry["binary_addr"] = sub.binary_addr
         if sub.label_name:
             entry["name"] = sub.label_name
         if sub.title:
@@ -292,8 +294,14 @@ def _build_items():
             # Raw bytes
             raw_bytes = [memorymanager.memory_binary[addr + i] for i in range(length)]
 
-            # Labels at this address
+            # Labels at this address (runtime addr and, for move blocks,
+            # the binary addr which may have BASE_MOVE_ID labels)
             labels = _get_labels_at(runtime_addr)
+            if move_id != movemanager.BASE_MOVE_ID:
+                binary_labels = _get_labels_at(RuntimeAddr(int(addr)))
+                for bl in binary_labels:
+                    if bl not in labels:
+                        labels.append(bl)
 
             # Labels within multi-byte classifications (e.g. mid-instruction)
             sub_labels = {}
