@@ -310,7 +310,12 @@ def subroutine(runtime_addr, name=None, title=None, description=None, on_entry=N
     # if the subroutine in within the binary, output a header comment for it.
     if memorymanager.is_data_loaded_at_binary_addr(binary_loc.binary_addr):
         _emit_subroutine_banner_runtime(runtime_addr, title, description, on_entry, on_exit, move_id)
-    trace.add_subroutine(runtime_addr, name, title, description, on_entry, on_exit, hook, move_id)
+
+    # Store binary_addr when it differs from runtime_addr (i.e. within a move block)
+    sub_binary_addr = None
+    if int(binary_loc.binary_addr) != int(runtime_addr):
+        sub_binary_addr = int(binary_loc.binary_addr)
+    trace.add_subroutine(runtime_addr, name, title, description, on_entry, on_exit, hook, move_id, binary_addr=sub_binary_addr)
 
 
 def _format_subroutine_middle(title, description, on_entry, on_exit):
