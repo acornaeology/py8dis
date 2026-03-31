@@ -794,8 +794,8 @@ def emit(print_output=True):
             if old_end_addr != start_addr:
                 d.extend(formatter.code_start(start_addr, end_addr, False))
 
-            # Output any base move labels just before starting a new !pseudopc block
-            d.extend(emit_labels(BinaryLocation(start_addr, movemanager.BASE_MOVE_ID), False))
+            # Output any base move labels and annotations just before starting a new !pseudopc block
+            d.extend(emit_labels(BinaryLocation(start_addr, movemanager.BASE_MOVE_ID), True))
 
             # Output start of !pseudopc block
             dest_runtime_addr = movemanager.b2r(start_addr)
