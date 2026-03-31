@@ -112,10 +112,10 @@ def comment_binary(binary_loc, text, *, word_wrap=False, indent=0, align=Align.B
             # Skip exact duplicate auto-generated comments
             if entry.as_string(binary_loc.binary_addr) == new_comment.as_string(binary_loc.binary_addr):
                 return
-            # Skip auto-generated inline comments when a manual inline comment
-            # already exists at the same address. Manual comments take priority
-            # since they typically provide more specific context.
-            if align == Align.INLINE and entry.align == Align.INLINE and not entry.auto_generated:
+            # Skip auto-generated inline comments when any other inline comment
+            # already exists at the same address. The first comment (whether
+            # manual or auto-generated) takes priority to avoid doubling.
+            if align == Align.INLINE and entry.align == Align.INLINE:
                 return
 
     annotations[binary_loc].append(new_comment)
