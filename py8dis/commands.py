@@ -237,22 +237,34 @@ def subroutine(runtime_addr, name=None, title=None, description=None, on_entry=N
     """
     if name is not None and len(name)>0:
         if is_entry_point:
-            entry(runtime_addr, name)
+            if move_id is not None:
+                with move_id:
+                    entry(runtime_addr, name)
+            else:
+                entry(runtime_addr, name)
         else:
-            optional_label(runtime_addr, name, move_id, definable_inline=True)
+            if move_id is not None:
+                label(runtime_addr, name, move_id)
+            else:
+                optional_label(runtime_addr, name, definable_inline=True)
 
     # Use default hook function
     if hook == False and trace.cpu.default_subroutine_hook:
         hook = trace.cpu.default_subroutine_hook
 
     runtime_addr = memorymanager.RuntimeAddr(runtime_addr)
-    binary_loc = movemanager.r2b_checked(runtime_addr)
+    if move_id is not None:
+        binary_addr, resolved_move_id = movemanager.r2b(runtime_addr, specific_move_id=move_id)
+        assert binary_addr is not None, "Invalid runtime address %s for move_id %d" % (hex(int(runtime_addr)), move_id)
+        binary_loc = memorymanager.BinaryLocation(binary_addr, resolved_move_id)
+    else:
+        binary_loc = movemanager.r2b_checked(runtime_addr)
 
     # if the subroutine in within the binary, output a header comment for it.
     if memorymanager.is_data_loaded_at_binary_addr(binary_loc.binary_addr):
         # Format a comment for the subroutine header
         if config.get_subroutine_header() is not None:
-            auto_comment(runtime_addr, config.get_subroutine_header(), word_wrap=False)
+            auto_comment(runtime_addr, config.get_subroutine_header(), word_wrap=False, move_id=move_id)
         com = "";
         middle = ""
         if title is not None and len(title)>0:
@@ -272,9 +284,9 @@ def subroutine(runtime_addr, name=None, title=None, description=None, on_entry=N
         if middle.endswith("\n"):
             middle = middle[:-1]
         if len(middle)>0:
-            auto_comment(runtime_addr, middle)
+            auto_comment(runtime_addr, middle, move_id=move_id)
             if config.get_subroutine_footer() is not None:
-                auto_comment(runtime_addr, config.get_subroutine_footer(), word_wrap=False)
+                auto_comment(runtime_addr, config.get_subroutine_footer(), word_wrap=False, move_id=move_id)
     trace.add_subroutine(runtime_addr, name, title, description, on_entry, on_exit, hook, move_id)
 
 def _convert_inline_to_align_internal(inline, align):
@@ -288,36 +300,44 @@ def _convert_inline_to_align_internal(inline, align):
     assert isinstance(align, Align)
     return align
 
-def comment(runtime_addr, text, inline=False, indent=0, word_wrap=True, *, align=None):
+def comment(runtime_addr, text, inline=False, indent=0, word_wrap=True, *, align=None, move_id=None):
     """Add a comment.
 
     Define a comment string to appear in the assembly code at the
     given address in the output. The comment can be inlined (added
     to the end of the line), or standalone (a separate line of output).
     The comment is word wrapped by default.
+
+    If move_id is specified, it is used to disambiguate the runtime
+    address when multiple moves target the same address range.
     """
     assert isinstance(inline, bool)
     assert isinstance(indent, int)
     assert isinstance(word_wrap, bool)
     assert (align == None) or isinstance(align, Align)
+    assert (move_id == None) or isinstance(move_id, int)
 
     # Convert the old True/False values into the modern 'Align' type as needed
     align = _convert_inline_to_align_internal(inline, align)
 
-    disassembly.comment(runtime_addr, text, word_wrap=word_wrap, indent=indent, align=align, auto_generated=False)
+    disassembly.comment(runtime_addr, text, word_wrap=word_wrap, indent=indent, align=align, auto_generated=False, move_id=move_id)
 
-def formatted_comment(runtime_addr, text, inline=False, align=None, indent=0):
-    """Add a comment without word wrapping."""
+def formatted_comment(runtime_addr, text, inline=False, align=None, indent=0, move_id=None):
+    """Add a comment without word wrapping.
+
+    If move_id is specified, it is used to disambiguate the runtime
+    address when multiple moves target the same address range.
+    """
 
     # Convert the old True/False values into the modern 'Align' type as needed
     align = _convert_inline_to_align_internal(inline, align)
 
-    disassembly.comment(runtime_addr, text, word_wrap=False, indent=indent, align=align)
+    disassembly.comment(runtime_addr, text, word_wrap=False, indent=indent, align=align, move_id=move_id)
 
 def no_automatic_comment(runtime_addr):
     trace.no_auto_comment_set.add(runtime_addr)
 
-def auto_comment(runtime_addr, text, inline=False, align=None, indent=0, show_blank=False, word_wrap=True):
+def auto_comment(runtime_addr, text, inline=False, align=None, indent=0, show_blank=False, word_wrap=True, move_id=None):
     """For internal use only. Generates a comment if not inhibited."""
 
     if runtime_addr == None:
@@ -329,12 +349,12 @@ def auto_comment(runtime_addr, text, inline=False, align=None, indent=0, show_bl
     if not (runtime_addr in trace.no_auto_comment_set):
         # Make sure we are within the binary
         runtime_addr = memorymanager.RuntimeAddr(runtime_addr)
-        binary_addr, _ = movemanager.r2b(runtime_addr)
+        binary_addr, _ = movemanager.r2b(runtime_addr, specific_move_id=move_id)
         if binary_addr:
             if memorymanager.is_data_loaded_at_binary_addr(binary_addr):
                 if show_blank:
                     blank(runtime_addr)
-                disassembly.comment(runtime_addr, text, word_wrap=word_wrap, indent=indent, align=align, auto_generated=True)
+                disassembly.comment(runtime_addr, text, word_wrap=word_wrap, indent=indent, align=align, auto_generated=True, move_id=move_id)
 
 def annotate(runtime_addr, s, *, align=Align.BEFORE_LABEL, priority=None):
     """Add a raw string directly to the assembly code output at the

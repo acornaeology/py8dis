@@ -84,16 +84,25 @@ def set_user_label_maker_hook(hook):
     assert user_label_maker_hook is None
     user_label_maker_hook = hook
 
-def comment(runtime_addr, text, *, word_wrap=True, indent=0, align=Align.BEFORE_LABEL, auto_generated=False):
+def comment(runtime_addr, text, *, word_wrap=True, indent=0, align=Align.BEFORE_LABEL, auto_generated=False, move_id=None):
     """Add a comment.
 
     Define a comment string to appear in the assembly code at the
     given address in the output. The comment can be inlined (added
     to the end of the line), or standalone (a separate line of output).
     The comment can be automatically word wrapped.
+
+    If move_id is specified, it is used to disambiguate the runtime
+    address when multiple moves target the same address range.
     """
 
-    binary_loc = movemanager.r2b_checked(runtime_addr)
+    if move_id is not None:
+        runtime_addr = memorymanager.RuntimeAddr(runtime_addr)
+        binary_addr, resolved_move_id = movemanager.r2b(runtime_addr, specific_move_id=move_id)
+        assert binary_addr is not None, "Invalid runtime address %s for move_id %d" % (hex(int(runtime_addr)), move_id)
+        binary_loc = BinaryLocation(binary_addr, resolved_move_id)
+    else:
+        binary_loc = movemanager.r2b_checked(runtime_addr)
     assert memorymanager.is_data_loaded_at_binary_addr(binary_loc.binary_addr)
 
     comment_binary(binary_loc, text, word_wrap=word_wrap, indent=indent, align=align, auto_generated=auto_generated)
