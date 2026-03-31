@@ -108,10 +108,14 @@ def comment_binary(binary_loc, text, *, word_wrap=False, indent=0, align=Align.B
     # This happens e.g. if the same OSWORD data block is used multiple times in a source.
     # Then the block can get the same comments multiple times.
     if auto_generated:
-        # Get the final comment at the location
-        entry = annotations[binary_loc][-1] if annotations[binary_loc] else None
-        if entry:
+        for entry in annotations[binary_loc]:
+            # Skip exact duplicate auto-generated comments
             if entry.as_string(binary_loc.binary_addr) == new_comment.as_string(binary_loc.binary_addr):
+                return
+            # Skip auto-generated inline comments when a manual inline comment
+            # already exists at the same address. Manual comments take priority
+            # since they typically provide more specific context.
+            if align == Align.INLINE and entry.align == Align.INLINE and not entry.auto_generated:
                 return
 
     annotations[binary_loc].append(new_comment)

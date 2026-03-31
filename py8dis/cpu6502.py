@@ -454,7 +454,7 @@ class Cpu6502(cpu.Cpu):
 
         # Add subroutine title comment
         if subroutine.title and subroutine.runtime_addr != runtime_addr:
-            disassembly.comment(runtime_addr, subroutine.title, align=Align.INLINE, word_wrap=False)
+            disassembly.comment(runtime_addr, subroutine.title, align=Align.INLINE, word_wrap=False, auto_generated=True)
 
         # After the subroutine, check for results in registers being used
         if subroutine.on_exit:
@@ -468,7 +468,7 @@ class Cpu6502(cpu.Cpu):
                             if com:
                                 is_private_comment = com.startswith("()") and com.endswith(")")
                                 if not is_private_comment:
-                                    disassembly.comment(reg_runtime_addr, reg.upper() + "=" + subroutine.on_exit[reg], align=Align.INLINE)
+                                    disassembly.comment(reg_runtime_addr, reg.upper() + "=" + subroutine.on_exit[reg], align=Align.INLINE, auto_generated=True)
 
 
 
