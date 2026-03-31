@@ -162,16 +162,25 @@ def _build_external_labels():
     return result
 
 
-def _get_labels_at(runtime_addr):
-    """Get all emitted label names at a runtime address."""
+def _get_labels_at(runtime_addr, move_id=None):
+    """Get emitted label names at a runtime address.
+
+    If move_id is specified, only return labels defined for that
+    specific move_id. Otherwise return all emitted labels.
+    """
     if runtime_addr not in labelmanager.labels:
         return []
     label = labelmanager.labels[runtime_addr]
     names = []
-    for name_list in label.explicit_names.values():
-        for name in name_list:
+    if move_id is not None:
+        for name in label.explicit_names.get(move_id, []):
             if name.emitted:
                 names.append(name.text)
+    else:
+        for name_list in label.explicit_names.values():
+            for name in name_list:
+                if name.emitted:
+                    names.append(name.text)
     return names
 
 
@@ -294,14 +303,16 @@ def _build_items():
             # Raw bytes
             raw_bytes = [memorymanager.memory_binary[addr + i] for i in range(length)]
 
-            # Labels at this address (runtime addr and, for move blocks,
-            # the binary addr which may have BASE_MOVE_ID labels)
-            labels = _get_labels_at(runtime_addr)
+            # Labels at this address, filtered to the item's move_id.
+            # For move blocks, also include BASE_MOVE_ID labels at both
+            # the runtime addr and the binary addr (for at_binary_addr labels).
+            labels = _get_labels_at(runtime_addr, move_id)
             if move_id != movemanager.BASE_MOVE_ID:
-                binary_labels = _get_labels_at(RuntimeAddr(int(addr)))
-                for bl in binary_labels:
-                    if bl not in labels:
-                        labels.append(bl)
+                for base_labels in (_get_labels_at(runtime_addr, movemanager.BASE_MOVE_ID),
+                                    _get_labels_at(RuntimeAddr(int(addr)), movemanager.BASE_MOVE_ID)):
+                    for bl in base_labels:
+                        if bl not in labels:
+                            labels.append(bl)
 
             # Labels within multi-byte classifications (e.g. mid-instruction)
             sub_labels = {}
