@@ -18,6 +18,7 @@ formatted_comment()     Add a comment, with no word wrapping.
 subroutine()            Define a subroutine.
 
 byte()                  Categorise 8 bit bytes at the given address as byte data.
+fill()                  Categorise a run of identical bytes as a compact fill directive.
 word()                  Categorise 16 bit words at the given address as word data.
 stringterm()            Terminates at a specified value.
 stringcr()              Terminates at ASCII code 13.
@@ -491,6 +492,49 @@ def byte(runtime_addr, n=1, cols=None):
     if not memorymanager.check_data_loaded_at_binary_addr(binary_loc.binary_addr, n, True):
         return
     disassembly.add_classification(binary_loc.binary_addr, classification.Byte(n, cols=cols))
+
+def fill(runtime_addr, n, value=None):
+    """Categorise a run of n identical bytes as a compact fill directive.
+
+    The bytes at `runtime_addr` through `runtime_addr + n - 1` must all
+    hold the same value. If `value` is supplied, it must match the
+    loaded binary (this is verified here rather than at assembly
+    time); if omitted, the fill value is inferred from the binary.
+
+    Output is assembler-specific (see each Assembler subclass's
+    `fill_directive` method): beebasm emits a `FOR ... : equb v :
+    NEXT` loop, acme emits `!fill N, v`, and any assembler that
+    doesn't override gets a single long `equb` line. All expand to
+    the same N bytes at assembly time, so the round-trip is
+    byte-identical.
+
+    Typical use is for large &FF padding regions at the end of a ROM
+    or between code and data blocks."""
+
+    assert n >= 1
+    runtime_addr = memorymanager.RuntimeAddr(runtime_addr)
+    binary_loc = movemanager.r2b_checked(runtime_addr)
+    if not memorymanager.check_data_loaded_at_binary_addr(binary_loc.binary_addr, n, True):
+        return
+
+    inferred = memorymanager.memory_binary[binary_loc.binary_addr]
+    if value is None:
+        value = inferred
+    else:
+        assert 0 <= value <= 0xff
+        if value != inferred:
+            utils.die("fill(&%04X, %d, &%02X): first byte is &%02X, not &%02X" %
+                      (int(runtime_addr), n, value, inferred, value))
+
+    # Verify the whole range really is constant -- otherwise the fill
+    # directive would silently discard actual data.
+    for i in range(1, n):
+        b = memorymanager.memory_binary[binary_loc.binary_addr + i]
+        if b != value:
+            utils.die("fill(&%04X, %d, &%02X): byte at offset %d is &%02X, not &%02X" %
+                      (int(runtime_addr), n, value, i, b, value))
+
+    disassembly.add_classification(binary_loc.binary_addr, classification.Fill(n, value))
 
 # TODO: byte()/word() should probably optionally (via an optional arg or a variant function)
 # allow the user to specify a format hint for the range without having to make a separate call

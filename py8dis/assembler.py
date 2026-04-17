@@ -30,3 +30,19 @@ class Assembler(object):
 
     def assert_expr(self, expr, value):
         self.pending_assertions[expr] = value
+
+    def fill_directive(self, value, length):
+        """Emit `length` copies of a single byte `value`.
+
+        Returns a list of assembler-source lines (without the leading
+        indent or the inline hex-dump comment). Subclasses should
+        override to emit the assembler's most compact fill idiom while
+        still producing byte-identical output when reassembled.
+
+        The default implementation falls back to repeated byte
+        directives (one `byte_prefix()` line containing the value
+        repeated `length` times), which is correct but not compact.
+        """
+        prefix = self.byte_prefix()
+        value_str = self.hex2(value)
+        return [prefix + ", ".join([value_str] * length)]

@@ -148,6 +148,12 @@ class Acme(assembler.Assembler):
         # Prefix to take the low byte of a label
         return "<"
 
+    def fill_directive(self, value, length):
+        """Emit acme's native `!fill N, v` directive."""
+        assert length >= 1
+        assert 0 <= value <= 0xff
+        return ["%s%d, %s" % (utils.force_case("!fill "), length, self.hex2(value))]
+
     def byte_prefix(self):
         # For outputting bytes
         return utils.force_case("!byte ")

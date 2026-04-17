@@ -270,6 +270,26 @@ class Beebasm(assembler.Assembler):
         # Prefix to take the low byte of a label
         return ""
 
+    def fill_directive(self, value, length):
+        """Emit a beebasm FOR loop that generates `length` copies of
+        `value`.
+
+        beebasm has no native fill-with-value directive, but `FOR
+        <var>, 1, N : equb &XX : NEXT` expands to exactly N copies at
+        assembly time. The loop variable name `_py8dis_fill_n%` is
+        deliberately unusual to avoid colliding with anything a
+        driver script might have declared.
+        """
+        assert length >= 1
+        assert 0 <= value <= 0xff
+
+        for_ = utils.force_case("for")
+        next_ = utils.force_case("next")
+        equb_ = utils.force_case("equb")
+        line = "%s _py8dis_fill_n%%, 1, %d : %s %s : %s" % (
+            for_, length, equb_, self.hex2(value), next_)
+        return [line]
+
     def byte_prefix(self):
         # For outputting bytes
         return utils.force_case("equb ")

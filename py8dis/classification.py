@@ -90,6 +90,36 @@ class Byte(object):
         return mainformatter.format_data_block(binary_loc, self._length, self._cols, 1, annotations)
 
 
+class Fill(object):
+    """Object used to mark a run of identical bytes as a single fill.
+
+    Unlike Byte, which emits one `equb` line per ~12 bytes, Fill emits
+    a compact assembler directive (e.g. a beebasm `FOR ... : equb v :
+    NEXT` loop, or acme's native `!fill N, v`) for the entire run.
+    Round-trip is still byte-identical because the directive expands
+    to the same N bytes at assembly time.
+    """
+
+    def __init__(self, length, value):
+        assert length > 0
+        assert 0 <= value <= 0xff
+        self._length = length
+        self._value = value
+
+    def length(self):
+        return self._length
+
+    def value(self):
+        return self._value
+
+    def is_code(self, binary_addr):
+        return False
+
+    def as_string_list(self, binary_loc, annotations):
+        return mainformatter.format_fill_block(binary_loc, self._length,
+                                               self._value, annotations)
+
+
 class Word(object):
     """Object used to mark part of the binary data as words (16 bit)."""
 

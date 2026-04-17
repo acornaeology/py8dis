@@ -133,6 +133,33 @@ def format_data_block(binary_loc, length, cols, element_size, annotations):
         format_data_block_line(binary_loc, text, start_index, end_index, element_size, annotations, prefix))
     return result
 
+def format_fill_block(binary_loc, length, value, annotations):
+    """Format a run of identical bytes as a compact fill directive.
+
+    Asks the configured assembler for its preferred fill idiom (e.g.
+    a beebasm FOR loop, acme's `!fill`) and decorates the first line
+    with the usual inline hex-dump comment so the reader can still
+    see the address range and byte count alongside the directive.
+    """
+    assert isinstance(binary_loc.binary_addr, BinaryAddr)
+    assert memorymanager.is_valid_binary_addr(binary_loc.binary_addr)
+    assert length >= 1
+    assert 0 <= value <= 0xff
+
+    lines = config.get_assembler().fill_directive(value, length)
+    assert lines, "fill_directive returned no lines"
+
+    indent = utils.make_indent(1)
+    first_line = indent + lines[0]
+    first_line = add_inline_comment_including_hexdump(
+        binary_loc, length, "", annotations, first_line)
+
+    result = [first_line]
+    for extra in lines[1:]:
+        result.append(indent + extra)
+    return result
+
+
 def uint_formatter(n, bits, pad=False):
     """Format an 8 or 16 bit number as hex or single digit decimal.
 
