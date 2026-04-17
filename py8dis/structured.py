@@ -384,6 +384,11 @@ def _build_items():
                 if exprs:
                     entry["expressions"] = exprs
 
+            elif isinstance(c, classification.Fill):
+                entry["type"] = "fill"
+                entry["value"] = c.value()
+                entry["length"] = length
+
             elif isinstance(c, classification.Byte):
                 entry["type"] = "byte"
                 entry["values"] = list(raw_bytes)
