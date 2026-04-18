@@ -121,6 +121,27 @@ def test_brief_strips_inline_markdown(tmp_path):
     assert entry["brief"] == "Paired with mem_ptr_hi."
 
 
+def test_brief_ends_at_newline_within_first_paragraph(tmp_path):
+    """A single newline inside the first paragraph marks the end of the
+    brief. The remainder of the paragraph stays in `description` (and
+    so still renders on the memory-map page) but is excluded from
+    `brief`, keeping the tooltip/asm form tight."""
+    body = (
+        'label(0x0460, "tx_data0",\n'
+        '      description="TX frame buffer byte 6 -- first optional scout payload byte.\\n'
+        'E.g. a queried network number in a WhatNet response.",\n'
+        '      length=1, group="ram_buffers", access="rw")\n'
+    )
+    _, data = _run(tmp_path, body)
+    entry = data["memory_map"][0]
+    assert entry["brief"] == (
+        "TX frame buffer byte 6 -- first optional scout payload byte."
+    )
+    # Full description still carries both parts (the site's memory-map
+    # page renders it through Markdown, where `\n` is a soft break).
+    assert "queried network number" in entry["description"]
+
+
 def test_multi_byte_buffer_records_length(tmp_path):
     body = (
         'label(0x025A, "reachable_via_b",\n'

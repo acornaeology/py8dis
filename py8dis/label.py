@@ -249,22 +249,38 @@ class Label(object):
         return result
 
     def _memory_map_brief(self):
-        """Extract the brief (first paragraph of `description`) for the
-        trailing `;` comment on an equate line.
+        """Extract the brief of `description` for short contexts -- the
+        trailing `;` comment on an equate line and the HTML tooltip on
+        a label reference.
 
-        Uses the same Markdown-aware pipeline the Comment renderer uses
-        so `[label](address:HEX)`, backticks, and emphasis collapse
-        cleanly to plain asm-style text.
+        Two nested separators delimit the brief:
+
+        - Blank line (`\\n\\n`): splits the first paragraph (brief
+          plus any leading explanation) from the extended detail.
+        - Single newline (`\\n`) within the first paragraph: marks the
+          end of the brief itself. Everything before the first `\\n`
+          in the first paragraph is the brief; everything after still
+          renders in the containing paragraph on the memory-map page
+          (soft break collapses to a space) but is excluded from the
+          tight asm/tooltip form.
+
+        When the first paragraph has no interior `\\n`, the whole first
+        paragraph is the brief -- so single-sentence descriptions need
+        no author markup.
+
+        Runs through the Comment renderer's Markdown-to-plain-text
+        pipeline so `[label](address:HEX)`, backticks, and emphasis
+        collapse cleanly.
         """
         if not self.description:
             return None
-        # Split on first blank line (Pandoc-style brief/extended).
-        first_para = self.description.split("\n\n", 1)[0].strip()
-        if not first_para:
+        first_para = self.description.split("\n\n", 1)[0]
+        brief = first_para.split("\n", 1)[0].strip()
+        if not brief:
             return None
         # Import locally to avoid a circular import at module load.
         from . import markdown_asm
-        return markdown_asm.markdown_to_asm_text(first_para, inline=True)
+        return markdown_asm.markdown_to_asm_text(brief, inline=True)
 
     def local_definition_string_list(self, align_value_column):
         """Return a list of the local label `label = value` output strings."""
