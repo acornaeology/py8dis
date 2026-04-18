@@ -43,6 +43,17 @@ class Label(object):
         relevant_move_ids = movemanager.move_ids_for_runtime_addr(self.runtime_addr)
         self.relevant_active_move_ids = [x for x in movemanager.active_move_ids[:] if x in relevant_move_ids]
 
+        # Optional memory-map metadata attached via `label(..., description=...,
+        # length=..., group=..., access=...)`. Only meaningful for
+        # out-of-ROM labels that want to appear on the rendered memory-map
+        # page and as a trailing `;` brief after the asm equate. The
+        # description is raw Markdown; the first paragraph is treated as
+        # the brief (the same Pandoc-style split the glossary uses).
+        self.description = None
+        self.length = None
+        self.group = None
+        self.access = None
+
         self.references = []         # Holds the binary locations that reference this label
 
         # `local_labels` stores a list objects of class LocalLabel
@@ -203,7 +214,13 @@ class Label(object):
         return max_name_length
 
     def explicit_definition_string_list(self, align_value_column):
-        """Return a list of the explicit `label = value` output strings."""
+        """Return a list of the explicit `label = value` output strings.
+
+        If a memory-map description has been attached (via `label(...,
+        description=...)`), the brief (first paragraph of the
+        description) is appended as a trailing `;` comment after each
+        equate line.
+        """
 
         # Note that we don't invoke the label hook or anything here -
         # if a name got *used* for the label at some point, it should
@@ -220,11 +237,34 @@ class Label(object):
                     name.emitted = True
         gathered_names = sorted(gathered_names)
 
+        brief = self._memory_map_brief()
+
         result = []
         for name in gathered_names:
-            result.append(assembler.explicit_label(name, assembler.hex4(self.runtime_addr), offset=None, align_column=align_value_column))
+            line = assembler.explicit_label(name, assembler.hex4(self.runtime_addr), offset=None, align_column=align_value_column)
+            if brief:
+                line += "  " + assembler.comment_prefix() + " " + brief
+            result.append(line)
 
         return result
+
+    def _memory_map_brief(self):
+        """Extract the brief (first paragraph of `description`) for the
+        trailing `;` comment on an equate line.
+
+        Uses the same Markdown-aware pipeline the Comment renderer uses
+        so `[label](address:HEX)`, backticks, and emphasis collapse
+        cleanly to plain asm-style text.
+        """
+        if not self.description:
+            return None
+        # Split on first blank line (Pandoc-style brief/extended).
+        first_para = self.description.split("\n\n", 1)[0].strip()
+        if not first_para:
+            return None
+        # Import locally to avoid a circular import at module load.
+        from . import markdown_asm
+        return markdown_asm.markdown_to_asm_text(first_para, inline=True)
 
     def local_definition_string_list(self, align_value_column):
         """Return a list of the local label `label = value` output strings."""

@@ -41,6 +41,7 @@ def emit_structured():
         "constants": _build_constants(),
         "subroutines": _build_subroutines(items),
         "external_labels": _build_external_labels(),
+        "memory_map": _build_memory_map(),
         "items": items,
     }
 
@@ -159,6 +160,47 @@ def _build_external_labels():
         name = label.get_already_emitted_name()
         if name:
             result[name] = int(runtime_addr)
+    return result
+
+
+def _build_memory_map():
+    """Build the memory-map entry list for outside-ROM labels.
+
+    Includes only labels that carry at least one memory-map kwarg
+    (description / length / group / access) supplied via
+    `label(..., description=..., ...)`. Bare `label(addr, name)` calls
+    without metadata are left for `external_labels` (and the asm
+    equate block); they aren't promoted into the memory map.
+
+    Emission order follows sorted runtime address -- deterministic
+    across builds.
+    """
+    result = []
+    for runtime_addr in sorted(labelmanager.labels):
+        label = labelmanager.labels[runtime_addr]
+        binary_addr, _ = movemanager.r2b(runtime_addr)
+        if binary_addr is not None and memorymanager.is_valid_binary_addr(binary_addr) and memorymanager.is_data_loaded_at_binary_addr(binary_addr):
+            continue
+        has_meta = any(getattr(label, attr, None) is not None
+                       for attr in ("description", "length", "group", "access"))
+        if not has_meta:
+            continue
+        name = label.get_already_emitted_name()
+        if not name:
+            continue
+        entry = {
+            "addr": int(runtime_addr),
+            "name": name,
+        }
+        if label.length is not None:
+            entry["length"] = label.length
+        if label.group is not None:
+            entry["group"] = label.group
+        if label.access is not None:
+            entry["access"] = label.access
+        if label.description is not None:
+            entry["description"] = label.description
+        result.append(entry)
     return result
 
 
