@@ -200,6 +200,13 @@ def _build_memory_map():
             entry["access"] = label.access
         if label.description is not None:
             entry["description"] = label.description
+            # Also expose the plain-text brief (first paragraph of the
+            # description, with backticks and `[label](address:...)`
+            # links collapsed) so consumers can drop it into attributes
+            # like HTML `data-tip` without re-implementing the strip.
+            brief = label._memory_map_brief()
+            if brief:
+                entry["brief"] = brief
         result.append(entry)
     return result
 

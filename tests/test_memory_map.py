@@ -102,6 +102,23 @@ def test_full_kwargs_emit_to_memory_map_and_asm_brief(tmp_path):
     # Full description -- brief AND extended paragraph -- stays in JSON
     assert "Low byte of the indirect pointer" in entry["description"]
     assert "Extended paragraph" in entry["description"]
+    # Plain-text brief (just the first paragraph, Markdown stripped) is
+    # exposed alongside so site renderers can use it for tooltips.
+    assert "Low byte of the indirect pointer" in entry["brief"]
+    assert "Extended paragraph" not in entry["brief"]
+
+
+def test_brief_strips_inline_markdown(tmp_path):
+    """The `brief` field has backticks and address links collapsed to
+    plain text, for use in HTML attributes like `data-tip`."""
+    body = (
+        'label(0x0080, "mem_ptr_lo",\n'
+        '      description="Paired with [`mem_ptr_hi`](address:0081).",\n'
+        '      length=1, group="zp", access="rw")\n'
+    )
+    _, data = _run(tmp_path, body)
+    entry = data["memory_map"][0]
+    assert entry["brief"] == "Paired with mem_ptr_hi."
 
 
 def test_multi_byte_buffer_records_length(tmp_path):
