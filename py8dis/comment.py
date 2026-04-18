@@ -32,7 +32,14 @@ class Comment(Annotation):
         self.source_text = text
 
         def late_formatter():
-            strtext = str(text)
+            # The `source_text` may contain Markdown-style
+            # [label](address:HEX[?hex]) links that downstream
+            # structured-JSON consumers (e.g. a web renderer)
+            # interpret as anchors. The asm output is consumed by an
+            # assembler, so strip the markup here and emit plain text
+            # only. JSON output reads `self.source_text` directly and
+            # therefore preserves the markup.
+            strtext = utils.strip_address_uri_links(str(text))
             if word_wrap:
                 if align != Align.INLINE:
                     return mainformatter.format_comment(strtext, indent)

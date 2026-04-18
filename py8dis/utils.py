@@ -15,6 +15,59 @@ from . import config
 # Path to this library
 library_path = os.path.dirname(os.path.abspath(__file__))
 
+# Markdown-ish inline link of the form [label](address:HEX[@version][?flag]).
+# Used inside comment text and subroutine titles/descriptions to mark a
+# label as a clickable reference in downstream renderers. The asm renderer
+# strips the markup to plain text via `strip_address_uri_links` (below);
+# the structured JSON preserves the source text unchanged so the HTML
+# renderer in the site generator can resolve it to an anchor.
+_ADDRESS_URI_LINK_RE = re.compile(
+    r'\[(?P<label>[^\]\[]+)\]\(address:'
+    r'(?P<hex>[0-9A-Fa-f]{4,})'
+    r'(?:@[^)?]+)?'         # optional @version, ignored in listing context
+    r'(?:\?(?P<flag>[^)]*))?'
+    r'\)',
+    re.IGNORECASE,
+)
+
+
+def strip_address_uri_links(text):
+    """Replace [label](address:HEX[?hex]) with plain text for asm output.
+
+    Without a `?hex` flag, the link collapses to the label text alone:
+        "see [rx_frame_b](address:E263)"      -> "see rx_frame_b"
+    With `?hex`, the hex is appended in parentheses (upper-cased):
+        "see [rx_frame_b](address:E263?hex)"  -> "see rx_frame_b (&E263)"
+
+    An `@version` suffix is silently stripped: comments inside a listing
+    always refer to the current version, so a version qualifier is
+    redundant here, but passing the same Markdown through asm and
+    site-gen shouldn't require separate spellings.
+
+    Unknown flags collapse as if no flag were present (with a warning
+    emitted once per unknown flag value).
+    """
+
+    def rewrite(match):
+        # Strip any ` pairs the author wrapped around the label for
+        # Markdown <code> styling — those are markup that downstream
+        # HTML renderers interpret, but in an asm ; comment they're
+        # just decoration.
+        label = match.group("label").replace("`", "")
+        hex_str = match.group("hex")
+        flag = (match.group("flag") or "").lower()
+
+        if not flag:
+            return label
+        if flag == "hex":
+            return f"{label} (&{hex_str.upper()})"
+        warn(f"unknown flag '?{flag}' in address: URI — rendering label "
+             f"only in asm output")
+        return label
+
+    return _ADDRESS_URI_LINK_RE.sub(rewrite, text)
+
+
 def die(s):
     """Print an error message and halt execution."""
 
