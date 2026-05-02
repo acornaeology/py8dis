@@ -16,6 +16,7 @@ comment()               Add a comment, with word_wrapping by default.
 formatted_comment()     Add a comment, with no word wrapping.
 
 subroutine()            Define a subroutine.
+data_banner()           Subroutine-style banner for a data region (no trace).
 
 byte()                  Categorise 8 bit bytes at the given address as byte data.
 fill()                  Categorise a run of identical bytes as a compact fill directive.
@@ -359,6 +360,28 @@ def subroutine(runtime_addr, name=None, title=None, description=None, on_entry=N
     if int(binary_loc.binary_addr) != int(runtime_addr):
         sub_binary_addr = int(binary_loc.binary_addr)
     trace.add_subroutine(runtime_addr, name, title, description, on_entry, on_exit, hook, move_id, binary_addr=sub_binary_addr)
+
+
+def data_banner(runtime_addr, name=None, title=None, description=None, *, move_id=None):
+    """
+    Emit a subroutine-style banner header on a data region.
+
+    Identical to ``subroutine()`` for the purposes of producing the
+    `* * *`-bordered title/description block in the assembly output and
+    the JSON entry, but does NOT register the address as a code entry
+    point. Use this for tables, fill regions, hardware-vector blocks,
+    and other landmarks classified as data via ``byte()`` / ``word()``
+    / ``string*()`` -- a normal ``subroutine()`` call there would make
+    py8dis trace the bytes as code, leading to spurious or conflicting
+    classifications.
+
+    Parameters mirror the relevant subset of ``subroutine()``:
+    ``runtime_addr``, ``name``, ``title``, ``description``, ``move_id``.
+    The ``on_entry`` / ``on_exit`` / ``hook`` arguments don't apply to
+    data regions and aren't accepted.
+    """
+    subroutine(runtime_addr, name=name, title=title, description=description,
+               move_id=move_id, hook=None, is_entry_point=False)
 
 
 def _format_subroutine_middle(title, description, on_entry, on_exit):
